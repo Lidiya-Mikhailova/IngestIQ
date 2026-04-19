@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.venv-airflow/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test/
+tests/
+
+# Data
+data/raw/
+data/state/
+warehouse.duckdb
+*.duckdb
+*.log
+
+# Airflow
+
+.airflow/
+logs/
+
+# Environment
+.env
+.env.*.local
+.envrc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+*.md
+!README.md
+
+# Docker
+.docker/
+
+# dbt
+src/transform/my_transform_project/logs/

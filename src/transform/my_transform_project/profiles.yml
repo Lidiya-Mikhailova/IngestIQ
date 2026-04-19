@@ -1,0 +1,7 @@
+my_transform_project:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../../../data/warehouse.duckdb"
+      threads: 1

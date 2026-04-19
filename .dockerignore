@@ -1,0 +1,47 @@
+# Виртуальные окружения
+.venv/
+.venv-airflow/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Airflow
+.airflow/
+
+# Тесты
+test/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Документация
+*.md
+REDME.md
+
+# Среды разработки
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Тяжелые файлы
+warehouse.duckdb
+*.log
