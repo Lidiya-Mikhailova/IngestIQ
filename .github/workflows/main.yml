@@ -1,0 +1,40 @@
+name: Deploy IngestIQ
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+
+            echo "Starting deploy"
+
+            mkdir -p ~/IngestIQ
+            cd ~/IngestIQ
+
+            # если первый раз — клонируем
+            if [ ! -d .git ]; then
+              git clone git@github.com:Lidiya-Mikhailova/IngestIQ.git .
+            fi
+
+            # обновляем код
+            git pull origin main
+
+            echo "Code updated"
+
+            # пересборка контейнеров
+            docker compose down
+            docker compose up -d --build
+
+            echo "Deploy completed successfully"
