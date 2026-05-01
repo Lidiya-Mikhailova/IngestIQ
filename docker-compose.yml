@@ -23,6 +23,8 @@ services:
 
   airflow-webserver:
     image: apache/airflow:2.9.1
+    env_file:
+      -  .env
     container_name: airflow_webserver
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
