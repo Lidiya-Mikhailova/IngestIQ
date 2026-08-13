@@ -27,8 +27,6 @@ env/
 .pytest_cache/
 .coverage
 htmlcov/
-test/
-tests/
 
 # Data
 data/raw/
@@ -60,4 +58,5 @@ Thumbs.db
 
 # dbt
 src/transform/my_transform_project/logs/
+src/transform/my_transform_project/tests/
 .aider*
