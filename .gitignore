@@ -60,3 +60,4 @@ Thumbs.db
 
 # dbt
 src/transform/my_transform_project/logs/
+.aider*

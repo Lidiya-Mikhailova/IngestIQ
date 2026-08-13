@@ -23,11 +23,9 @@ st.set_page_config(page_title="IngestIQ Analytics", layout="wide", initial_sideb
 st.markdown("""<style>...</style>""", unsafe_allow_html=True)
 
 
-
 @st.cache_data(ttl=300)
 def load_users():
     try:
-        
         return pd.read_sql("SELECT user_id, signup_date, subscription_plan, is_active FROM mart_users", engine)
     except Exception as e:
         st.error(f"Error loading users: {e}")
@@ -51,11 +49,9 @@ def load_events(limit=100):
         return pd.DataFrame()
 
 
-
 def hash_user(user_id):
     if pd.isna(user_id): return "usr_------"
     return f"usr_{hashlib.sha256(str(user_id).encode()).hexdigest()[:6]}"
-
 
 
 def main():
@@ -70,17 +66,13 @@ def main():
             st.cache_data.clear()
             st.rerun()
 
-   
     users_raw = load_users()
     trans_raw = load_transactions()
     events_raw = load_events(100)
 
-
     if users_raw.empty and trans_raw.empty:
         st.info("Waiting for data pipeline... Run the ingestion DAG first or check DB connection.")
         return
-
-   
 
 
 if __name__ == "__main__":

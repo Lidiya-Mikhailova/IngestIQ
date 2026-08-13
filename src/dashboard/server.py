@@ -1,23 +1,19 @@
 import asyncio
+import logging
 import random
+from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+DASHBOARD_DIR = Path(__file__).resolve().parent
+DASHBOARD_HTML = DASHBOARD_DIR / "dashboard.html"
 
 EVENT_TYPES = [
     "page_view", "button_click", "form_submit", "login", "logout",
@@ -25,7 +21,7 @@ EVENT_TYPES = [
     "subscription_cancel", "api_call", "search_query"
 ]
 
-PLANS = ["free", "starter", "professional", "enterprise"]
+PLANS = ["free", "basic", "pro", "enterprise"]
 PAYMENT_METHODS = ["card", "paypal", "bank_transfer", "apple_pay", "google_pay"]
 STATUSES = ["succeeded", "failed", "refunded", "pending"]
 
@@ -40,7 +36,10 @@ class ConnectionManager:
         logger.info(f"Client connected. Total: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        try:
+            self.active_connections.remove(websocket)
+        except ValueError:
+            pass
         logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
 
     async def broadcast(self, data: dict):
@@ -123,6 +122,29 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(manager.broadcast_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -140,7 +162,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/")
 async def get_dashboard():
-    return FileResponse("dashboard.html")
+    if not DASHBOARD_HTML.exists():
+        return {"error": "dashboard.html not found"}
+    return FileResponse(DASHBOARD_HTML)
 
 
 @app.get("/data/all")
@@ -152,17 +176,9 @@ async def get_all_data():
     }
 
 
-async def start_broadcast():
-    await manager.broadcast_loop()
-
-
 if __name__ == "__main__":
     import uvicorn
-    
-    async def main():
-        asyncio.create_task(start_broadcast())
-        config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
-        server = uvicorn.Server(config)
-        await server.serve()
-    
-    asyncio.run(main())
+
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    server.run()

@@ -31,7 +31,7 @@ def _normal_random(mean: float, std: float, min_val: float = None, max_val: floa
 
 
 def _truncated_exponential(lam: float, min_val: float, max_val: float) -> float:
-    value = -random.expovariate(lam)
+    value = random.expovariate(lam)
     return round(max(min_val, min(value, max_val)), 2)
 
 

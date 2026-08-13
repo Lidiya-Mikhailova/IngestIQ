@@ -6,15 +6,14 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path("/opt/airflow/ingestiq")
+ROOT = Path("/opt/airflow/dags")
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from src.config.settings import DATABASE_URL, RAW_DIR
 from src.orchestration.pipeline import run_pipeline
 from src.transform.run import run_transform
 from src.analytics.run import run_analytics

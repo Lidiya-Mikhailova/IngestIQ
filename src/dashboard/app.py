@@ -479,7 +479,7 @@ def render_filter_bar():
     with col2:
         date_to = st.date_input("To", value=today, max_value=today)
     with col3:
-        plan = st.selectbox("Plan", ["All", "free", "starter", "professional", "enterprise"])
+        plan = st.selectbox("Plan", ["All", "free", "basic", "pro", "enterprise"])
     with col4:
         status = st.selectbox("Status", ["All", "succeeded", "failed", "pending", "refunded"])
     

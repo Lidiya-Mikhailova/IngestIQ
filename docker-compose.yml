@@ -22,12 +22,13 @@ services:
       retries: 5
 
   airflow-webserver:
-    image: apache/airflow:2.9.1
+    image: apache/airflow:3.1.8
     env_file:
       -  .env
     container_name: airflow_webserver
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
+      DATA_DIR: /app/data
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ingestiq_db}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
@@ -61,10 +62,11 @@ services:
     restart: always
 
   airflow-scheduler:
-    image: apache/airflow:2.9.1
+    image: apache/airflow:3.1.8
     container_name: airflow_scheduler
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
+      DATA_DIR: /app/data
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ingestiq_db}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"

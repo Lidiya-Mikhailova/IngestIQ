@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IngestIQ Live Dashboard</title>
+  <style>
+    :root {
+      --bg: #0F1419;
+      --card: #1A1F26;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #E7E9EA;
+      --muted: #71767B;
+      --accent: #5B8FB9;
+      --success: #00A67E;
+      --error: #C73E3E;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+    .header h1 { font-size: 20px; font-weight: 500; }
+    .header span { font-size: 12px; color: var(--muted); font-family: monospace; }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--error); }
+    .dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
+    .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 16px; font-weight: 500; }
+    .row { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .row:last-child { border-bottom: none; }
+    .row .k { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .v { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+    .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+    .footer { margin-top: 2rem; font-size: 11px; color: var(--muted); font-family: monospace; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>IngestIQ Live Dashboard</h1>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting...</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Users</h2>
+      <div id="users">Loading...</div>
+    </div>
+    <div class="card">
+      <h2>Transactions</h2>
+      <div id="transactions">Loading...</div>
+    </div>
+    <div class="card">
+      <h2>Events</h2>
+      <div id="events">Loading...</div>
+    </div>
+  </div>
+
+  <div class="footer">Last update: <span id="lastUpdate">—</span></div>
+
+  <script>
+    const RENDERERS = {
+      users: (items) => items.map(u =>
+        `<div class="row"><span class="k">${u.user_id} · ${u.name}</span><span class="v">${u.subscription_plan} · ${u.country}</span></div>`
+      ).join(''),
+      transactions: (items) => items.map(t =>
+        `<div class="row"><span class="k">${t.transaction_id} · ${t.user_id}</span><span class="v">$${t.amount} ${t.currency} · ${t.status}</span></div>`
+      ).join(''),
+      events: (items) => items.map(e =>
+        `<div class="row"><span class="k">${e.event_type} · ${e.user_id}</span><span class="v">${e.event_id}</span></div>`
+      ).join(''),
+    };
+
+    const containers = { users: document.getElementById('users'), transactions: document.getElementById('transactions'), events: document.getElementById('events') };
+
+    function render(source, data) {
+      const el = containers[source];
+      if (!el) return;
+      const items = data || [];
+      el.innerHTML = items.length
+        ? RENDERERS[source](items)
+        : '<div class="empty">No data yet</div>';
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+    }
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+      ws.onopen = () => {
+        document.getElementById('statusDot').classList.add('online');
+        document.getElementById('statusText').textContent = 'Live';
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.source && msg.data) render(msg.source, msg.data);
+        } catch (e) { /* ignore malformed frame */ }
+      };
+
+      ws.onclose = () => {
+        document.getElementById('statusDot').classList.remove('online');
+        document.getElementById('statusText').textContent = 'Reconnecting...';
+        setTimeout(connect, 3000);
+      };
+    }
+
+    fetch('/data/all')
+      .then(r => r.json())
+      .then(d => {
+        render('users', d.users.data);
+        render('transactions', d.transactions.data);
+        render('events', d.events.data);
+      })
+      .catch(() => {});
+
+    connect();
+  </script>
+</body>
+</html>
