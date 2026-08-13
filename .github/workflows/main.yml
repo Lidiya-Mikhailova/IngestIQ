@@ -1,40 +1,29 @@
-name: Deploy IngestIQ
+name: CI IngestIQ
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -e
+          python-version: "3.12"
 
-            echo "Starting deploy"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest python-dotenv
 
-            mkdir -p ~/IngestIQ
-            cd ~/IngestIQ
-
-            # если первый раз — клонируем
-            if [ ! -d .git ]; then
-              git clone git@github.com:Lidiya-Mikhailova/IngestIQ.git .
-            fi
-
-            # обновляем код
-            git pull origin main
-
-            echo "Code updated"
-
-            # пересборка контейнеров
-            docker compose down
-            docker compose up -d --build
-
-            echo "Deploy completed successfully"
+      - name: Run tests
+        run: |
+          python -m pytest test/ -v
